@@ -1,0 +1,111 @@
+// Sélectionner le canevas et son contexte
+const canvas = document.getElementById('tetrisCanvas');
+const ctx = canvas.getContext('2d');
+
+// Définir les dimensions de la grille
+const ROWS = 20; // Nombre de lignes
+const COLS = 10; // Nombre de colonnes
+const SQUARE_SIZE = 30; // Taille de chaque carré dans la grille
+
+// Grille de jeu (initialement vide)
+const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+
+// Définir une pièce (forme en J)
+const piece = {
+    shape: [
+        [1, 0, 0],
+        [1, 1, 1]
+    ],
+    x: 4, // Position X
+    y: 0, // Position Y
+    color: 'red'
+};
+
+// Fonction pour dessiner la grille
+function drawGrid() {
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+            if (grid[row][col] === 1) {
+                ctx.fillStyle = 'blue'; // Couleur des pièces
+                ctx.fillRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            } else {
+                ctx.fillStyle = 'lightgray'; // Couleur de la grille
+                ctx.fillRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                ctx.strokeStyle = 'gray';
+                ctx.strokeRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            }
+        }
+    }
+}
+
+// Fonction pour dessiner la pièce courante
+function drawPiece() {
+    for (let row = 0; row < piece.shape.length; row++) {
+        for (let col = 0; col < piece.shape[row].length; col++) {
+            if (piece.shape[row][col] === 1) {
+                ctx.fillStyle = piece.color;
+                ctx.fillRect((piece.x + col) * SQUARE_SIZE, (piece.y + row) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            }
+        }
+    }
+}
+
+// Fonction pour vérifier la collision
+function checkCollision(piece) {
+    for (let row = 0; row < piece.shape.length; row++) {
+        for (let col = 0; col < piece.shape[row].length; col++) {
+            if (piece.shape[row][col] === 1) {
+                const newX = piece.x + col;
+                const newY = piece.y + row;
+                if (newX < 0 || newX >= COLS || newY >= ROWS || grid[newY][newX] !== 0) {
+                    return true; // Collision détectée
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Fonction pour placer la pièce sur la grille
+function placePiece() {
+    for (let row = 0; row < piece.shape.length; row++) {
+        for (let col = 0; col < piece.shape[row].length; col++) {
+            if (piece.shape[row][col] === 1) {
+                grid[piece.y + row][piece.x + col] = 1; // Marquer la case comme occupée
+            }
+        }
+    }
+}
+
+// Fonction pour générer une nouvelle pièce
+function spawnNewPiece() {
+    piece.shape = [
+        [1, 0, 0],
+        [1, 1, 1]
+    ];
+    piece.x = 4;
+    piece.y = 0;
+}
+
+// Fonction pour faire tomber la pièce
+function dropPiece() {
+    piece.y += 1; // Déplacer la pièce vers le bas
+    if (checkCollision(piece)) {
+        piece.y -= 1; // Remettre la pièce en place si collision détectée
+        placePiece(); // Fixer la pièce en place
+        spawnNewPiece(); // Créer une nouvelle pièce
+    }
+}
+
+// Fonction pour mettre à jour le jeu (appelée régulièrement)
+function updateGame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Effacer l'écran à chaque mise à jour
+    drawGrid(); // Dessiner la grille
+    drawPiece(); // Dessiner la pièce courante
+}
+
+// Appeler `dropPiece` à chaque intervalle de 1 seconde (60 FPS)
+setInterval(() => {
+    dropPiece();
+    updateGame();
+}, 1000 / 60);
