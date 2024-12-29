@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        canvas {
+            border: 2px solid #000;
+            background-color: #f0f0f0;
+        }
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+        <div class="game-info">
+            <div>Score: <span id="score">0</span></div>
+            <div>Niveau: <span id="level">1</span></div>
+            <div>Prochaine pièce:</div>
+            <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
+        </div>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html>
