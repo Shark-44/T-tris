@@ -114,8 +114,18 @@ class TetrisGame {
         this.grid = [];
         this.currentPiece = null;
         this.score = 0;
+        this.level = 1;
         this.gameOver = false;
+
+                // Éléments du DOM pour le score et le niveau
+                this.scoreElement = document.getElementById('score');
+                this.levelElement = document.getElementById('level');
+                
+                // Vitesse initiale de chute
+                this.baseDropInterval = 1000; // 1 seconde
+                this.updateDropInterval();
     }
+
 
 // methode de collision 
     checkCollision(piece, offsetX = 0, offsetY = 0) {
@@ -140,12 +150,50 @@ class TetrisGame {
         }
         return false; // Pas de collision
     }
+       // Mettre à jour l'intervalle de chute en fonction du niveau
+       updateDropInterval() {
+        // La vitesse augmente de 10% par niveau
+        this.config.dropInterval = this.baseDropInterval * Math.pow(0.9, this.level - 1);
+    }
+       // Mettre à jour le score
+       updateScore(linesCleared) {
+        // Points par ligne selon le nombre de lignes effacées simultanément
+        const points = {
+            1: 100,
+            2: 300,
+            3: 500,
+            4: 800
+        };
+        
+        if (linesCleared > 0) {
+            // Calcul des points avec bonus de niveau
+            this.score += points[linesCleared] * this.level;
+            
+            // Mise à jour du niveau (1 niveau tous les 1000 points)
+            const newLevel = Math.floor(this.score / 1000) + 1;
+            if (newLevel !== this.level) {
+                this.level = newLevel;
+                this.updateDropInterval();
+            }
+            
+            // Mise à jour de l'affichage
+            this.updateDisplay();
+        }
+    }
+    // Mettre à jour l'affichage du score et du niveau
+    updateDisplay() {
+        this.scoreElement.textContent = this.score;
+        this.levelElement.textContent = this.level;
+    }
+
 // init du jeu
     init() {
         // Initialisation de la grille
         this.createEmptyGrid();
         // Démarre la boucle de jeu
         this.gameLoop();
+        // Affichage initial du score et du niveau
+        this.updateDisplay(); 
     }
 
     createEmptyGrid() {
@@ -191,17 +239,17 @@ class TetrisGame {
     }
     // Dessin de la grille
     drawGrid() {
-        for (let row = 0; row < this.config.gridHeight; row++) {
-            for (let col = 0; col < this.config.gridWidth; col++) {
+        for (let row = 0; row < this.config.gridHeight; row++) { // parcours les lignes
+            for (let col = 0; col < this.config.gridWidth; col++) { // parcours les colonnes
                 if (this.grid[row][col] !== 0) { // Si la case est occupée
-                    this.config.ctx.fillStyle = this.grid[row][col]; // Couleur de la pièce
+                    this.config.ctx.fillStyle = this.grid[row][col]; // Couleur du bloc
                     this.config.ctx.fillRect(
                         col * this.config.blockSize, 
                         row * this.config.blockSize, 
                         this.config.blockSize, 
                         this.config.blockSize
                     );
-                }
+                } 
             }
         }
     }
@@ -225,16 +273,49 @@ class TetrisGame {
             }
         }
     }
+
+    clearLines() {
+        let linesCleared = 0;
+        
+        // Parcourir la grille de bas en haut
+        for (let row = this.config.gridHeight - 1; row >= 0; row--) {
+            // Vérifier si la ligne est complète (tous les éléments non nuls)
+            const isLineComplete = this.grid[row].every(cell => cell !== 0);
+            
+            if (isLineComplete) {
+                // Supprimer la ligne complète
+                this.grid.splice(row, 1);
+                // Ajouter une nouvelle ligne vide en haut
+                this.grid.unshift(new Array(this.config.gridWidth).fill(0));
+                linesCleared++;
+                row++; // Vérifier la même position à nouveau car les lignes ont descendu
+            }
+        }
+        
+        // Mettre à jour le score (optionnel)
+        if (linesCleared > 0) {
+            this.updateScore(linesCleared);
+        }
+        
+        return linesCleared;
+    }
       // Ajouter la pièce à la grille
       addPieceToGrid() {
         const shape = this.currentPiece.shape;
         for (let row = 0; row < shape.length; row++) {
             for (let col = 0; col < shape[row].length; col++) {
                 if (shape[row][col] === 1) {
-                    this.grid[this.currentPiece.y + row][this.currentPiece.x + col] = this.currentPiece.color;
+                    const gridY = this.currentPiece.y + row;
+                    if (gridY < 0) {
+                        this.gameOver = true;
+                        return;
+                    }
+                    this.grid[gridY][this.currentPiece.x + col] = this.currentPiece.color;
                 }
             }
         }
+        // Après avoir ajouté la pièce, vérifier les lignes complètes
+        this.clearLines();
     }
     spawnPiece() {
         const randomIndex = Math.floor(Math.random() * tetriminos.length);
