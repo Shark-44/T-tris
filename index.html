@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tetris</title>
     <style>
+        body { 
+            background-image: url(bgtetris.webp);
+            background-size: cover;
+            background-position: center;
+        }
         .game-container {
             display: flex;
             justify-content: center;
@@ -20,6 +25,30 @@
             flex-direction: column;
             gap: 10px;
         }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+        }
+        .sound-control {
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            margin-left: 10vw;
+        }
+        .game-controls {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-right: 10vw;
+        }
     </style>
 </head>
 <body>
@@ -33,6 +62,35 @@
         </div>
     </div>
 
+    <footer>
+        <div class="sound-control" id="soundControl">🔈</div>
+        <div class="game-controls">
+            <div><strong>Commandes de jeu :</strong></div>
+            <div>⬅️ : Déplacer à gauche</div>
+            <div>➡️ : Déplacer à droite</div>
+            <div>⬆️ : Rotation</div>
+            <div>⬇️ : Accélérer la descente</div>
+            <div>␣ : Relancer le jeu</div>
+        </div>
+        <audio id="gameAudio" src="Tetris.ogg" loop></audio>
+    </footer>
+
     <script src="tetris.js"></script>
+    <script>
+        const soundControl = document.getElementById('soundControl');
+        const gameAudio = document.getElementById('gameAudio');
+        let isPlaying = false;
+
+        soundControl.addEventListener('click', () => {
+            if (isPlaying) {
+                gameAudio.pause();
+                soundControl.textContent = '🔈'; 
+            } else {
+                gameAudio.play();
+                soundControl.textContent = '🔊'; 
+            }
+            isPlaying = !isPlaying;
+        });
+    </script>
 </body>
 </html>
