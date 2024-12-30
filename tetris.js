@@ -116,14 +116,15 @@ class TetrisGame {
         this.score = 0;
         this.level = 1;
         this.gameOver = false;
+        this.gameOverDisplayed = false;
 
-                // Éléments du DOM pour le score et le niveau
-                this.scoreElement = document.getElementById('score');
-                this.levelElement = document.getElementById('level');
-                
-                // Vitesse initiale de chute
-                this.baseDropInterval = 1000; // 1 seconde
-                this.updateDropInterval();
+        // Éléments du DOM pour le score et le niveau
+        this.scoreElement = document.getElementById('score');
+        this.levelElement = document.getElementById('level');
+        
+        // Vitesse initiale de chute
+        this.baseDropInterval = 1000; // 1 seconde
+        this.updateDropInterval();
     }
 
 
@@ -230,12 +231,37 @@ class TetrisGame {
         }
     }
 
+    drawGameOver() {
+        // Fond semi-transparent
+        this.config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.config.ctx.fillRect(0, 0, this.config.canvas.width, this.config.canvas.height);
+
+        // Texte Game Over
+        this.config.ctx.fillStyle = 'white';
+        this.config.ctx.font = 'bold 48px Arial';
+        this.config.ctx.textAlign = 'center';
+        this.config.ctx.fillText('GAME OVER', this.config.canvas.width / 2, this.config.canvas.height / 2 - 50);
+
+        // Score final
+        this.config.ctx.font = '24px Arial';
+        this.config.ctx.fillText(`Score Final: ${this.score}`, this.config.canvas.width / 2, this.config.canvas.height / 2 + 10);
+
+        // Message pour recommencer
+        this.config.ctx.font = '20px Arial';
+        this.config.ctx.fillText('Appuyez sur ESPACE pour recommencer', this.config.canvas.width / 2, this.config.canvas.height / 2 + 50);
+    }
+
+
     // Dessin de l'ensemble du jeu
     draw() {
         // Dessin du jeu
         this.config.ctx.clearRect(0, 0, this.config.canvas.width, this.config.canvas.height);
         this.drawGrid();
         this.drawCurrentPiece();
+                
+        if (this.gameOver) {
+            this.drawGameOver();
+        }
     }
     // Dessin de la grille
     drawGrid() {
@@ -299,6 +325,7 @@ class TetrisGame {
         
         return linesCleared;
     }
+
       // Ajouter la pièce à la grille
       addPieceToGrid() {
         const shape = this.currentPiece.shape;
@@ -316,14 +343,44 @@ class TetrisGame {
         }
         // Après avoir ajouté la pièce, vérifier les lignes complètes
         this.clearLines();
+       // Vérifier si la pièce ajoutée dépasse la grille (Game Over)
+        if (this.currentPiece.y < 0) {
+            this.gameOver = true;
+        }
     }
+
     spawnPiece() {
         const randomIndex = Math.floor(Math.random() * tetriminos.length);
         const randomTetrimino = tetriminos[randomIndex];
         this.currentPiece = new Piece(randomTetrimino);
+        if (this.checkCollision(this.currentPiece)) {
+            this.gameOver = true;
+        }
     }
-    handleInput(event) {
-        if (!this.gameOver && this.currentPiece) {
+
+    
+    // Réinitialiser le jeu
+    resetGame() {
+        this.grid = [];
+        this.createEmptyGrid();
+        this.currentPiece = null;
+        this.score = 0;
+        this.level = 1;
+        this.gameOver = false;
+        this.config.dropInterval = this.baseDropInterval;
+        this.updateDisplay();
+        this.gameLoop();
+    }
+
+ handleInput(event) {
+        if (this.gameOver) {
+            if (event.code === 'Space') {
+                this.resetGame();
+            }
+            return;
+        }
+
+        if (this.currentPiece) {
             switch(event.key) {
                 case 'ArrowLeft':
                     if (!this.checkCollision(this.currentPiece, -1, 0)) {
@@ -336,10 +393,8 @@ class TetrisGame {
                     }
                     break;
                 case 'ArrowUp':
-                    // Sauvegardez l'index de rotation actuel
-                    const currentIndex = this.currentPiece.currentRotationIndex;
+                    const currentIndex = this.currentRotationIndex;
                     this.currentPiece.rotate();
-                    // Si la rotation cause une collision, revenez en arrière
                     if (this.checkCollision(this.currentPiece, 0, 0)) {
                         this.currentPiece.currentRotationIndex = currentIndex;
                     }
@@ -352,7 +407,8 @@ class TetrisGame {
             }
         }
     }
-} 
+}
+
 
 
 
